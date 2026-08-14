@@ -1,5 +1,5 @@
 import React from 'react'
-import { Heart, Eye, Star, Wrench } from 'lucide-react'
+import { Heart, Eye, Star } from 'lucide-react'
 
 export default function CarCard({ 
   car, 
@@ -19,6 +19,7 @@ export default function CarCard({
         />
         <span className="card-badge">{car.badge}</span>
         <span className="card-scale">{car.scale}</span>
+        
         <button 
           className={`card-wishlist-btn ${isWishlisted ? 'active' : ''}`}
           onClick={(e) => {
@@ -27,7 +28,7 @@ export default function CarCard({
           }}
           title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
-          <Heart size={16} fill={isWishlisted ? "#fff" : "transparent"} />
+          <Heart size={15} fill={isWishlisted ? "#fff" : "transparent"} />
         </button>
       </div>
 
@@ -35,19 +36,12 @@ export default function CarCard({
         <div className="card-specs-row">
           <span>{car.brand}</span>
           <span>•</span>
-          <span>{car.year}</span>
-          <span>•</span>
           <span style={{ color: 'var(--accent-amber)' }}>
-            <Star size={13} fill="currentColor" /> {car.rating}
+            <Star size={12} fill="currentColor" /> {car.rating}
           </span>
         </div>
 
         <h3 className="card-title">{car.name}</h3>
-
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-          <Wrench size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-          {car.weight} · {car.category}
-        </div>
 
         <div className="card-footer">
           <div className="card-price">₹{car.price.toLocaleString('en-IN')}</div>
@@ -56,11 +50,10 @@ export default function CarCard({
               className="btn-card-action"
               onClick={() => onSelectCar(car)}
             >
-              <Eye size={15} /> Specs
+              <Eye size={14} /> Specs
             </button>
             <button 
-              className="btn-card-action"
-              style={{ background: 'var(--accent-red)' }}
+              className="btn-card-action btn-card-add"
               onClick={() => onAddToCart(car)}
             >
               Add

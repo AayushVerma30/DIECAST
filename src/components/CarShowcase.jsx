@@ -1,5 +1,6 @@
 import React from 'react'
 import CarCard from './CarCard'
+import { Heart } from 'lucide-react'
 
 export default function CarShowcase({ 
   cars, 
@@ -12,19 +13,39 @@ export default function CarShowcase({
   onSelectCar,
   wishlist,
   onToggleWishlist,
-  onAddToCart
+  onAddToCart,
+  showWishlistOnly,
+  setShowWishlistOnly
 }) {
-  const brands = ["ALL", "Hot Wheels Premium", "Matchbox Collectors", "Hot Wheels Elite", "Matchbox Collectibles", "Mini GT x Hot Wheels"]
+  const brands = ["ALL", "Hot Wheels", "Matchbox", "Mini GT"]
   const categories = ["ALL", "Supercars", "JDM Legends", "American Muscle", "Race & GT"]
+
+  const displayedCars = showWishlistOnly 
+    ? cars.filter(c => wishlist.includes(c.id))
+    : cars
 
   return (
     <section id="showcase" className="showcase-section">
       <div className="container">
         <div className="section-header">
           <div>
-            <h2 className="section-title">Hot Wheels & Matchbox Vault</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
+              <h2 className="section-title" style={{ margin: 0 }}>
+                {showWishlistOnly ? "My Wishlist" : "Diecast Vault"}
+              </h2>
+              <button 
+                className={`scale-pill-btn ${showWishlistOnly ? 'active' : ''}`}
+                onClick={() => setShowWishlistOnly(!showWishlistOnly)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
+              >
+                <Heart size={13} fill={showWishlistOnly ? "#fff" : "transparent"} />
+                Saved ({wishlist.length})
+              </button>
+            </div>
             <p className="section-desc">
-              Browse authentic metal diecast toy models, Real Riders rubber tire editions, and collector blister cards.
+              {showWishlistOnly 
+                ? "Your saved collector diecast models." 
+                : "Authentic 1:64 Metal/Metal™ diecast models with Real Riders™ rubber tires."}
             </p>
           </div>
 
@@ -34,7 +55,7 @@ export default function CarShowcase({
               value={selectedBrand}
               onChange={(e) => setSelectedBrand(e.target.value)}
             >
-              <option value="ALL">All Diecast Brands & Lines</option>
+              <option value="ALL">All Brands</option>
               {brands.filter(b => b !== "ALL").map(b => (
                 <option key={b} value={b}>{b}</option>
               ))}
@@ -56,22 +77,24 @@ export default function CarShowcase({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
-              <option value="popular">Featured & Bestsellers</option>
+              <option value="popular">Featured</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
-              <option value="rating">Top Collector Rating</option>
+              <option value="rating">Top Rated</option>
             </select>
           </div>
         </div>
 
-        {cars.length === 0 ? (
+        {displayedCars.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
-            <h3>No diecast models match your filter criteria.</h3>
-            <p style={{ marginTop: '0.5rem' }}>Try clearing filters or search terms.</p>
+            <h3>{showWishlistOnly ? "No models saved in your wishlist." : "No diecast models match your search."}</h3>
+            <p style={{ marginTop: '0.4rem', fontSize: '0.9rem' }}>
+              {showWishlistOnly ? "Click the heart icon on any model to save it." : "Try resetting your search or filters."}
+            </p>
           </div>
         ) : (
           <div className="cars-grid">
-            {cars.map(car => (
+            {displayedCars.map(car => (
               <CarCard 
                 key={car.id}
                 car={car}

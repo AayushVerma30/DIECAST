@@ -1,40 +1,55 @@
 import React from 'react'
-import { ShoppingBag, Heart, Search, ShieldCheck } from 'lucide-react'
+import { ShoppingBag, Heart, Search, User } from 'lucide-react'
 
 export default function Navbar({ 
   cartCount, 
   wishlistCount, 
   onOpenCart, 
+  onOpenAccount,
+  activeOrdersCount,
   searchTerm, 
-  setSearchTerm 
+  setSearchTerm,
+  onToggleWishlistFilter,
+  isWishlistActive,
+  userName
 }) {
   return (
     <nav className="navbar">
       <div className="container nav-container">
         <a href="#" className="brand-logo">
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ color: 'var(--accent-red)' }}>✦</span> DIECAST
-          </span>
+          <span style={{ color: 'var(--accent-red)' }}>✦</span> DIECAST
           <span className="brand-badge">VAULT</span>
         </a>
 
         <div className="search-box">
-          <Search size={18} color="var(--text-muted)" />
+          <Search size={16} color="var(--text-muted)" />
           <input 
             type="text" 
-            placeholder="Search Nissan GT-R, Ferrari, 1:18, Shelby..." 
+            placeholder="Search Skyline, Porsche, Matchbox..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="nav-actions">
+          {/* User Account / Orders Button */}
           <button 
-            className="nav-btn" 
-            title="Wishlist"
-            onClick={onOpenCart}
+            className="user-avatar-btn"
+            onClick={onOpenAccount}
+            title="My Account & Purchases Tracker"
           >
-            <Heart size={20} />
+            <div className="user-avatar-circle">
+              {userName ? userName.charAt(0) : 'U'}
+            </div>
+            <span>Orders {activeOrdersCount > 0 && `(${activeOrdersCount})`}</span>
+          </button>
+
+          <button 
+            className={`nav-btn ${isWishlistActive ? 'active' : ''}`}
+            title="Saved Wishlist"
+            onClick={onToggleWishlistFilter}
+          >
+            <Heart size={18} fill={isWishlistActive ? 'var(--accent-red)' : 'transparent'} />
             {wishlistCount > 0 && <span className="badge-count">{wishlistCount}</span>}
           </button>
           
@@ -43,7 +58,7 @@ export default function Navbar({
             title="Cart"
             onClick={onOpenCart}
           >
-            <ShoppingBag size={20} />
+            <ShoppingBag size={18} />
             {cartCount > 0 && <span className="badge-count">{cartCount}</span>}
           </button>
         </div>

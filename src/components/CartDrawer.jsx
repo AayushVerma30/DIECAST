@@ -6,7 +6,8 @@ export default function CartDrawer({
   onClose, 
   cartItems, 
   onRemoveItem, 
-  onClearCart 
+  onClearCart,
+  onOpenCheckout 
 }) {
   if (!isOpen) return null
 
@@ -69,9 +70,14 @@ export default function CartDrawer({
             <button 
               className="btn-primary" 
               style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => alert(`Order initiated for ₹${total.toLocaleString('en-IN')}! Authenticated and insured dispatch ready.`)}
+              onClick={() => {
+                onClose()
+                if (onOpenCheckout) {
+                  onOpenCheckout()
+                }
+              }}
             >
-              Secure Checkout <ArrowRight size={18} />
+              Proceed to Checkout <ArrowRight size={18} />
             </button>
           </div>
         )}
