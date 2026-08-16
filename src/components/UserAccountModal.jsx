@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { X, Package, Receipt, User, Clock, CheckCircle2, Truck, ShieldCheck, ArrowUpRight, Eye, Settings, Save, Sparkles, Car, Camera, Trash2, Upload } from 'lucide-react'
 
 export default function UserAccountModal({ 
@@ -6,30 +6,46 @@ export default function UserAccountModal({
   onClose, 
   userProfile, 
   onUpdateProfile, 
-  orders, 
-  transactions,
+  orders = [], 
+  transactions = [],
   onSelectCar,
-  onAddToast
+  onAddToast,
+  onOpenAuth,
+  currentRole = 'user'
 }) {
   const [activeTab, setActiveTab] = useState('garage')
   const fileInputRef = useRef(null)
 
   // Editable Profile Form state with Avatar
   const [profileForm, setProfileForm] = useState({
-    name: userProfile.name || 'Suresh Verma',
-    email: userProfile.email || 'suresh@diecast.vault',
-    phone: userProfile.phone || '+91 98765 43210',
-    city: userProfile.city || 'New Delhi',
-    pincode: userProfile.pincode || '110001',
-    tier: userProfile.tier || 'Gold Collector Tier',
-    avatar: userProfile.avatar || null
+    name: userProfile?.name || 'Suresh Verma',
+    email: userProfile?.email || 'suresh@diecast.vault',
+    phone: userProfile?.phone || '+91 98765 43210',
+    city: userProfile?.city || 'New Delhi',
+    pincode: userProfile?.pincode || '110001',
+    tier: userProfile?.tier || 'Gold Collector Tier',
+    avatar: userProfile?.avatar || null
   })
+
+  useEffect(() => {
+    if (userProfile) {
+      setProfileForm({
+        name: userProfile.name || 'Suresh Verma',
+        email: userProfile.email || 'suresh@diecast.vault',
+        phone: userProfile.phone || '+91 98765 43210',
+        city: userProfile.city || 'New Delhi',
+        pincode: userProfile.pincode || '110001',
+        tier: userProfile.tier || 'Gold Collector Tier',
+        avatar: userProfile.avatar || null
+      })
+    }
+  }, [userProfile, isOpen])
 
   if (!isOpen) return null
 
   // Extract all cars owned in Garage from orders
-  const garageCars = orders.flatMap(order => 
-    order.items.map(item => ({
+  const garageCars = (orders || []).flatMap(order => 
+    (order.items || []).map(item => ({
       ...item,
       orderId: order.id,
       orderDate: order.date,
@@ -37,7 +53,7 @@ export default function UserAccountModal({
     }))
   )
 
-  const totalSpent = orders.reduce((sum, o) => sum + o.totalAmount, 0)
+  const totalSpent = (orders || []).reduce((sum, o) => sum + (o.totalAmount || 0), 0)
   const totalModelsPurchased = garageCars.reduce((cnt, i) => cnt + (i.quantity || 1), 0)
 
   const handleProfileChange = (e) => {
@@ -121,8 +137,8 @@ export default function UserAccountModal({
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>{profileForm.name}</h2>
-                  <span className="brand-badge" style={{ fontSize: '0.65rem', background: '#eab308' }}>
-                    {profileForm.tier}
+                  <span className="brand-badge" style={{ fontSize: '0.65rem', background: currentRole === 'owner' ? '#f59e0b' : (currentRole === 'admin' ? '#10b981' : '#eab308') }}>
+                    {currentRole === 'owner' ? 'Store Owner' : (currentRole === 'admin' ? 'Inventory Admin' : profileForm.tier)}
                   </span>
                 </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
@@ -131,13 +147,27 @@ export default function UserAccountModal({
               </div>
             </div>
 
-            <button 
-              className={`scale-pill-btn ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem' }}
-            >
-              <Settings size={14} /> Profile & Photo
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {onOpenAuth && (
+                <button 
+                  className="scale-pill-btn"
+                  onClick={() => {
+                    onClose()
+                    onOpenAuth()
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem' }}
+                >
+                  ⚡ Switch Portal
+                </button>
+              )}
+              <button 
+                className={`scale-pill-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem' }}
+              >
+                <Settings size={14} /> Profile & Photo
+              </button>
+            </div>
           </div>
 
           {/* Quick Clickable Stat Cards */}
@@ -228,7 +258,7 @@ export default function UserAccountModal({
                     >
                       <div style={{ position: 'relative', height: '120px', borderRadius: '8px', overflow: 'hidden', marginBottom: '0.6rem' }}>
                         <img 
-                          src={car.images[0]} 
+                          src={car.images?.[0] || ''} 
                           alt={car.name} 
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                         />
@@ -291,10 +321,10 @@ export default function UserAccountModal({
 
                     {/* Items preview in order */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                      {order.items.map((item, idx) => (
+                      {(order.items || []).map((item, idx) => (
                         <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <img src={item.images[0]} alt={item.name} style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }} />
+                            <img src={item.images?.[0] || ''} alt={item.name} style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }} />
                             <div>
                               <span style={{ color: '#fff', fontWeight: 600 }}>{item.name}</span>
                               <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>

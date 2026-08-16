@@ -16,11 +16,11 @@ export default function CarModal({ car, onClose, onAddToCart }) {
         {/* Gallery */}
         <div className="modal-gallery">
           <img 
-            src={car.images[activeImgIndex] || car.images[0]} 
+            src={car.images?.[activeImgIndex] || car.images?.[0] || ''} 
             alt={car.name} 
             className="modal-main-img" 
           />
-          {car.images.length > 1 && (
+          {car.images && car.images.length > 1 && (
             <div className="modal-thumbs">
               {car.images.map((img, idx) => (
                 <button
@@ -41,7 +41,7 @@ export default function CarModal({ car, onClose, onAddToCart }) {
           <h2 className="modal-title">{car.name}</h2>
           
           <div style={{ color: 'var(--accent-amber)', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Award size={15} /> {car.limitedEdition}
+            <Award size={15} /> {car.limitedEdition || 'Collector Series'}
           </div>
 
           <div className="modal-meta-grid">
@@ -51,15 +51,15 @@ export default function CarModal({ car, onClose, onAddToCart }) {
             </div>
             <div>
               <span className="meta-item-label">Material</span>
-              <span className="meta-item-val">{car.material}</span>
+              <span className="meta-item-val">{car.material || 'Diecast Metal'}</span>
             </div>
             <div>
               <span className="meta-item-label">Weight</span>
-              <span className="meta-item-val">{car.weight}</span>
+              <span className="meta-item-val">{car.weight || '~140g'}</span>
             </div>
             <div>
               <span className="meta-item-label">Dimensions</span>
-              <span className="meta-item-val">{car.dimensions}</span>
+              <span className="meta-item-val">{car.dimensions || 'Standard 1:64'}</span>
             </div>
           </div>
 
@@ -67,7 +67,7 @@ export default function CarModal({ car, onClose, onAddToCart }) {
             Key Features
           </h4>
           <ul className="modal-features-list">
-            {car.features.map((feature, idx) => (
+            {(car.features || []).map((feature, idx) => (
               <li key={idx}>
                 <CheckCircle2 size={15} color="var(--accent-amber)" />
                 <span>{feature}</span>
@@ -79,7 +79,7 @@ export default function CarModal({ car, onClose, onAddToCart }) {
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Price</span>
               <span style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#fff' }}>
-                ₹{car.price.toLocaleString('en-IN')}
+                ₹{car.price ? car.price.toLocaleString('en-IN') : '0'}
               </span>
             </div>
 

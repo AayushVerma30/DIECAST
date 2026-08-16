@@ -117,9 +117,9 @@ export default function Hero({ featuredCar, onSelectCar, onSelectBrand, selected
 
                 <div className="hero-img-wrapper">
                   <img 
-                    src={featuredCar.images[0]} 
+                    src={featuredCar.images?.[0] || ''} 
                     alt={featuredCar.name} 
-                    className="hero-img"
+                    className="hero-img" 
                   />
                   <span className="card-badge">
                     {featuredCar.badge}
@@ -138,7 +138,7 @@ export default function Hero({ featuredCar, onSelectCar, onSelectBrand, selected
                     </div>
                   </div>
                   <div>
-                    <div className="hero-card-price">₹{featuredCar.price.toLocaleString('en-IN')}</div>
+                    <div className="hero-card-price">₹{featuredCar.price ? featuredCar.price.toLocaleString('en-IN') : '0'}</div>
                   </div>
                 </div>
               </div>

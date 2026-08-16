@@ -43,11 +43,11 @@ export default function CartDrawer({
           <div className="drawer-items">
             {cartItems.map(item => (
               <div key={item.id} className="cart-item">
-                <img src={item.images[0]} alt={item.name} className="cart-item-img" />
+                <img src={item.images?.[0] || ''} alt={item.name} className="cart-item-img" />
                 <div className="cart-item-info">
                   <div className="cart-item-scale">Scale {item.scale} · Qty: {item.quantity}</div>
                   <div className="cart-item-title">{item.name}</div>
-                  <div className="cart-item-price">₹{(item.price * item.quantity).toLocaleString('en-IN')}</div>
+                  <div className="cart-item-price">₹{((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</div>
                 </div>
                 <button 
                   className="cart-item-remove"

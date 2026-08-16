@@ -12,7 +12,7 @@ export default function CarCard({
     <div className="car-card">
       <div className="card-media">
         <img 
-          src={car.images[0]} 
+          src={car.images?.[0] || ''} 
           alt={car.name} 
           className="card-img" 
           loading="lazy" 
@@ -37,14 +37,14 @@ export default function CarCard({
           <span>{car.brand}</span>
           <span>•</span>
           <span style={{ color: 'var(--accent-amber)' }}>
-            <Star size={12} fill="currentColor" /> {car.rating}
+            <Star size={12} fill="currentColor" /> {car.rating || 4.8}
           </span>
         </div>
 
         <h3 className="card-title">{car.name}</h3>
 
         <div className="card-footer">
-          <div className="card-price">₹{car.price.toLocaleString('en-IN')}</div>
+          <div className="card-price">₹{car.price ? car.price.toLocaleString('en-IN') : '0'}</div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button 
               className="btn-card-action"
