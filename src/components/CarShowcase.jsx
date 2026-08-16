@@ -44,8 +44,8 @@ export default function CarShowcase({
             </div>
             <p className="section-desc">
               {showWishlistOnly 
-                ? "Your saved collector diecast models." 
-                : "Authentic 1:64 Metal/Metal™ diecast models with Real Riders™ rubber tires."}
+                ? "Your saved diecast models." 
+                : "Browse Hot Wheels, Matchbox, and miniature scale toy cars."}
             </p>
           </div>
 

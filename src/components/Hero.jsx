@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Sparkles, ArrowRight, Eye, Flame } from 'lucide-react'
+import { Sparkles, ArrowRight, Eye } from 'lucide-react'
 
 export default function Hero({ featuredCar, onSelectCar, onSelectBrand, selectedBrand }) {
   const brandLines = ["ALL", "Hot Wheels", "Matchbox", "Mini GT"]
@@ -32,7 +32,7 @@ export default function Hero({ featuredCar, onSelectCar, onSelectBrand, selected
 
   return (
     <section className="hero-section">
-      {/* Background dynamic ambient glows */}
+      {/* Background ambient glows */}
       <div className="hero-glow-1"></div>
       <div className="hero-glow-2"></div>
 
@@ -40,23 +40,21 @@ export default function Hero({ featuredCar, onSelectCar, onSelectBrand, selected
         <div className="hero-grid">
           <div className="hero-content">
             <div className="hero-badge">
-              <Flame size={15} color="var(--accent-red)" />
-              <span>PRECISION DIECAST COLLECTION</span>
+              <span>DIECAST SCALE MODEL SHOWCASE</span>
             </div>
 
             <h1 className="hero-title">
-              Small Scale. <br />
-              <span className="highlight">Pure Heavy Metal</span> Art.
+              Collectible <br />
+              <span className="highlight">Diecast Scale</span> Cars.
             </h1>
 
             <p className="hero-subtitle">
-              Curated collection of authentic Hot Wheels Premium, Matchbox Collectors, 
-              and Real Riders™ 1:64 scale diecast castings.
+              Explore miniature Hot Wheels, Matchbox, and 1:64 scale diecast toy models.
             </p>
 
             <div className="hero-cta-group">
               <a href="#showcase" className="btn-primary">
-                Explore Vault <ArrowRight size={18} />
+                View Collection <ArrowRight size={18} />
               </a>
               {featuredCar && (
                 <button 

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import StatsSection from './components/StatsSection'
 import CarShowcase from './components/CarShowcase'
 import CarModal from './components/CarModal'
 import CartDrawer from './components/CartDrawer'
@@ -170,6 +169,7 @@ export default function App() {
         wishlistCount={wishlist.length}
         activeOrdersCount={activeOrdersCount}
         userName={userProfile.name}
+        userAvatar={userProfile.avatar}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
         searchTerm={searchTerm}
@@ -184,8 +184,6 @@ export default function App() {
         onSelectBrand={setSelectedBrand}
         selectedBrand={selectedBrand}
       />
-
-      <StatsSection />
 
       <CarShowcase 
         cars={filteredCars}
@@ -210,8 +208,11 @@ export default function App() {
         isOpen={isAccountOpen}
         onClose={() => setIsAccountOpen(false)}
         userProfile={userProfile}
+        onUpdateProfile={(updated) => setUserProfile(updated)}
         orders={orders}
         transactions={transactions}
+        onSelectCar={(car) => setActiveCarModal(car)}
+        onAddToast={addToast}
       />
 
       {/* Car Detail Modal */}
@@ -238,6 +239,7 @@ export default function App() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         cartItems={cart}
+        userProfile={userProfile}
         onOrderSuccess={handleOrderSuccess}
       />
 

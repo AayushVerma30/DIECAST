@@ -5,16 +5,17 @@ export default function CheckoutModal({
   isOpen, 
   onClose, 
   cartItems, 
+  userProfile = {},
   onOrderSuccess 
 }) {
   const [paymentMethod, setPaymentMethod] = useState('upi')
   const [formData, setFormData] = useState({
-    name: 'Suresh Verma',
-    phone: '+91 98765 43210',
-    email: 'suresh@diecast.vault',
+    name: userProfile.name || 'Suresh Verma',
+    phone: userProfile.phone || '+91 98765 43210',
+    email: userProfile.email || 'suresh@diecast.vault',
     address: 'Flat 402, Skyline Towers, Sector 18',
-    city: 'New Delhi',
-    pincode: '110001',
+    city: userProfile.city || 'New Delhi',
+    pincode: userProfile.pincode || '110001',
     upiId: 'suresh@okhdfcbank'
   })
   const [isOrdered, setIsOrdered] = useState(false)
@@ -74,20 +75,20 @@ export default function CheckoutModal({
         </button>
 
         {!isOrdered ? (
-          <div style={{ padding: '1.75rem' }}>
+          <div className="modal-content-pad">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
               <ShieldCheck size={22} color="var(--accent-red)" />
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>Collector Secure Checkout</h2>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>Order Checkout</h2>
             </div>
 
             {/* Cart summary preview */}
             <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem', borderRadius: '10px', marginBottom: '1.25rem', border: '1px solid var(--border-subtle)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                <span>Vault Models ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
+                <span>Selected Items ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
                 <span style={{ color: '#fff', fontWeight: 700 }}>₹{totalAmount.toLocaleString('en-IN')}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                <span>Insured Collector Packaging</span>
+                <span>Delivery & Packaging</span>
                 <span style={{ color: '#10b981', fontWeight: 700 }}>FREE</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', fontWeight: 800, color: '#fff', paddingTop: '0.4rem', borderTop: '1px solid var(--border-subtle)' }}>

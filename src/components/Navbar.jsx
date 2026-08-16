@@ -6,21 +6,23 @@ export default function Navbar({
   wishlistCount, 
   onOpenCart, 
   onOpenAccount,
-  activeOrdersCount,
   searchTerm, 
   setSearchTerm,
   onToggleWishlistFilter,
   isWishlistActive,
-  userName
+  userName,
+  userAvatar
 }) {
   return (
     <nav className="navbar">
       <div className="container nav-container">
+        {/* Left: Brand Logo */}
         <a href="#" className="brand-logo">
           <span style={{ color: 'var(--accent-red)' }}>✦</span> DIECAST
           <span className="brand-badge">VAULT</span>
         </a>
 
+        {/* Center: Search Bar */}
         <div className="search-box">
           <Search size={16} color="var(--text-muted)" />
           <input 
@@ -31,19 +33,25 @@ export default function Navbar({
           />
         </div>
 
+        {/* Right: Actions */}
         <div className="nav-actions">
-          {/* User Account / Orders Button */}
+          {/* Profile Button with Avatar + "Profile" */}
           <button 
             className="user-avatar-btn"
             onClick={onOpenAccount}
-            title="My Account & Purchases Tracker"
+            title="My Profile & Options"
           >
             <div className="user-avatar-circle">
-              {userName ? userName.charAt(0) : 'U'}
+              {userAvatar ? (
+                <img src={userAvatar} alt="Avatar" />
+              ) : (
+                userName ? userName.charAt(0) : 'U'
+              )}
             </div>
-            <span>Orders {activeOrdersCount > 0 && `(${activeOrdersCount})`}</span>
+            <span className="user-profile-label">Profile</span>
           </button>
 
+          {/* Wishlist Button */}
           <button 
             className={`nav-btn ${isWishlistActive ? 'active' : ''}`}
             title="Saved Wishlist"
@@ -53,6 +61,7 @@ export default function Navbar({
             {wishlistCount > 0 && <span className="badge-count">{wishlistCount}</span>}
           </button>
           
+          {/* Cart Button */}
           <button 
             className="nav-btn" 
             title="Cart"
