@@ -4996,4 +4996,431 @@ img {
   .vip-cards-grid {
     grid-template-columns: 1fr;
   }
+
+  .owner-dialog {
+    max-width: 95vw !important;
+    padding: 1.5rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .bestsellers-photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .cogs-control-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .payment-channels-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .owner-analytics-split {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Owner Modal Dialog & Full Page */
+  .modal-dialog.owner-dialog {
+    width: 96vw !important;
+    max-width: 100vw !important;
+    margin: 8px auto;
+    padding: 1.25rem 0.9rem !important;
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+  .owner-full-page-wrapper {
+    padding: 0.85rem 0.65rem 2.5rem;
+  }
+
+  .owner-full-page-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .owner-dialog-inner.full-view {
+    padding: 1.15rem 0.85rem;
+    border-radius: 12px;
+  }
+
+  /* Header & Action Buttons */
+  .owner-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .owner-main-title {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  .owner-subtitle {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .owner-actions-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .owner-actions-top button {
+    flex: 1 1 calc(50% - 0.35rem);
+    min-width: 120px;
+    justify-content: center;
+    font-size: 0.76rem;
+    padding: 0.45rem 0.65rem;
+    text-align: center;
+  }
+
+  /* Scrollable Nav Tabs */
+  .owner-nav-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.45rem;
+    padding-bottom: 0.65rem;
+    margin-bottom: 1.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
+  }
+
+  .owner-nav-tabs::-webkit-scrollbar {
+    display: block;
+    height: 4px;
+  }
+
+  .owner-nav-tabs::-webkit-scrollbar-thumb {
+    background: rgba(245, 158, 11, 0.3);
+    border-radius: 4px;
+  }
+
+  .owner-tab-btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.76rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    border-radius: 6px;
+  }
+
+  /* KPI Metrics Grid */
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .metric-card {
+    padding: 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .metric-value {
+    font-size: 1.2rem;
+  }
+
+  /* Tab 1: Overview Grid & Analytics */
+  .overview-section-card {
+    padding: 1rem 0.85rem;
+    margin-top: 1.25rem !important;
+  }
+
+  .overview-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .bestsellers-photo-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .bestseller-photo-header {
+    height: 120px;
+  }
+
+  .bestseller-card-title {
+    font-size: 0.82rem;
+  }
+
+  .analytics-box {
+    padding: 1rem 0.85rem;
+  }
+
+  /* Tab 2: Profit Calculator Stepper & Inputs */
+  .cogs-control-card {
+    padding: 1rem 0.85rem;
+  }
+
+  .cogs-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .cogs-pill-summary {
+    align-items: flex-start;
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+  }
+
+  .cogs-control-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .cost-input-box {
+    padding: 1rem 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .cost-input-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .cost-value-badge {
+    align-self: flex-start;
+  }
+
+  .cost-stepper {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+  }
+
+  .cost-step-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.74rem;
+  }
+
+  .cost-number-field {
+    min-width: 65px;
+    padding: 0 0.5rem;
+  }
+
+  .cost-number-field input {
+    font-size: 1rem;
+    padding: 0.35rem 0;
+  }
+
+  .cost-preset-chips {
+    gap: 0.35rem;
+  }
+
+  .preset-chip {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.7rem;
+  }
+
+  /* Tab 3: Payment Channels */
+  .payment-channels-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .payment-channel-card {
+    padding: 1rem 0.85rem;
+  }
+
+  /* Filter Toolbars */
+  .table-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  .filter-chip {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: 0.74rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  /* Tables: Smooth Horizontal Scroll & Safe Minimum Width */
+  .owner-orders-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+
+  .owner-orders-table {
+    min-width: 650px;
+  }
+
+  .owner-orders-table th,
+  .owner-orders-table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.76rem;
+  }
+
+  /* Tab 5: VIP Customers Page */
+  .vip-page-root {
+    gap: 1rem;
+  }
+
+  .vip-top-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .vip-main-title {
+    font-size: 1.25rem;
+  }
+
+  .vip-top-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .vip-top-actions button {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .vip-filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .vip-search-box {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .vip-tier-pills {
+    width: 100%;
+  }
+
+  .tier-filter-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .vip-card {
+    padding: 1rem 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .vip-metrics-strip {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0.55rem;
+    gap: 0.35rem;
+  }
+
+  .v-val {
+    font-size: 0.82rem;
+  }
+
+  /* Waybill Modal */
+  .waybill-modal-card {
+    max-width: 96vw;
+    width: 96vw;
+    padding: 1rem 0.85rem;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  .printable-waybill-sheet {
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .waybill-top-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .waybill-awb-box {
+    text-align: left;
+  }
+
+  .waybill-address-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .waybill-footer-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .waybill-modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .waybill-modal-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .owner-actions-top button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .owner-main-title {
+    font-size: 1.15rem;
+  }
+
+  .metric-card {
+    padding: 0.75rem;
+  }
+
+  .metric-value {
+    font-size: 1.1rem;
+  }
+
+  .vip-metrics-strip {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .vip-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .btn-send-coupon {
+    width: 100%;
+    justify-content: center;
+  }
 }

@@ -947,7 +947,7 @@ export default function OwnerDashboardModal({
                   Top revenue-generating diecast models ordered by collectors (picture on top with full details below).
                 </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <button
                   className="btn-secondary btn-sm"
                   onClick={handleExportOverviewCSV}
@@ -1310,7 +1310,7 @@ export default function OwnerDashboardModal({
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Individual cost breakdown, unit profit, and stock yield for <strong>{cars.length}</strong> catalog castings.
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <button
                 className="btn-secondary btn-sm"
                 onClick={handleExportProfitCalculatorCSV}
@@ -1425,7 +1425,7 @@ export default function OwnerDashboardModal({
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Channel breakdown across UPI, Credit Cards, Net Banking, and COD with bank MDR fees.
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <button
                 className="btn-secondary btn-sm"
                 onClick={handleExportPaymentsCSV}
@@ -1641,7 +1641,7 @@ export default function OwnerDashboardModal({
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Detailed breakdown of <strong>{cars.length}</strong> catalog castings and warehouse unit values.
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <button
                 className="btn-secondary btn-sm"
                 onClick={handleExportStockCSV}
