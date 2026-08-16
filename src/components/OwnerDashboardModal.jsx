@@ -4,13 +4,15 @@ import {
   BarChart3, PieChart, Users, ArrowUpRight, Download, Filter,
   CheckCircle2, Clock, Truck, ShieldAlert, Sparkles, RefreshCw, Car,
   CreditCard, QrCode, FileText, Printer, Award, Star, Search,
-  Sliders, ArrowDownRight, Check, AlertCircle, Send, ExternalLink,
-  Gift, HeartHandshake, Phone, Mail, MapPin, Edit3
+  Wrench, ArrowDownRight, Check, AlertCircle, Send, ExternalLink,
+  Gift, HeartHandshake, Phone, Mail, MapPin, Edit3, Plus, Minus, Calculator, Percent,
+  FileSpreadsheet
 } from 'lucide-react'
-import VipCustomersPage from './VipCustomersPage'
+import VipCustomersPage, { INITIAL_VIP_CUSTOMERS } from './VipCustomersPage'
+import { exportToCSV, exportToPDF, exportMultiSectionPDF } from '../utils/exportUtils'
 
 // VIP Customers List
-const DEFAULT_VIP_CUSTOMERS = [
+const DEFAULT_VIP_CUSTOMERS = INITIAL_VIP_CUSTOMERS || [
   {
     id: 'VIP-001',
     name: 'Suresh Verma',
@@ -193,28 +195,538 @@ export default function OwnerDashboardModal({
     return true
   })
 
-  // Export Sales Report CSV
-  const handleExportCSV = () => {
-    const headers = ["Order ID", "Date", "Customer / Payment", "Total Items", "Order Total (INR)", "Delivery Status"]
-    const rows = orders.map(o => [
-      o.id,
-      `"${o.date}"`,
-      `"${o.paymentMethod || 'Prepaid'}"`,
-      (o.items || []).reduce((s, i) => s + (i.quantity || 1), 0),
-      o.totalAmount,
-      `"${o.status}"`
+  // =========================================================================
+  // EXPORT UTILITIES (ALL 6 TABS + MASTER DOSSIER)
+  // =========================================================================
+
+  // 1. Tab 1: Sales & Profit Overview CSV & PDF
+  const handleExportOverviewCSV = () => {
+    const headers = ["Rank", "Car Model", "Brand", "Scale", "Category", "Unit Price (INR)", "Units Sold", "Total Revenue (INR)"]
+    const rows = bestSellers.map((item, idx) => [
+      `#${idx + 1}`,
+      item.name,
+      item.brand,
+      item.scale || '1:64',
+      item.category || 'Diecast',
+      item.price,
+      item.unitsSold,
+      item.grossSales
     ])
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n")
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `Diecast_Vault_Sales_Report_${new Date().toISOString().slice(0, 10)}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    exportToCSV({
+      filename: `Diecast_Vault_Sales_Overview_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
 
-    if (onAddToast) onAddToast("Sales report downloaded successfully!", "success")
+    if (onAddToast) onAddToast("Sales & Profit overview exported to CSV!", "success")
+  }
+
+  const handleExportOverviewPDF = () => {
+    const headers = ["Rank", "Diecast Model", "Brand & Scale", "Unit Price", "Units Sold", "Total Made"]
+    const rows = bestSellers.map((item, idx) => [
+      `<strong>#${idx + 1}</strong>`,
+      `<strong>${item.name}</strong>`,
+      `${item.brand} (${item.scale || '1:64'})`,
+      `₹${item.price.toLocaleString('en-IN')}`,
+      `<strong>${item.unitsSold} units</strong>`,
+      `<strong style="color:#059669">₹${item.grossSales.toLocaleString('en-IN')}</strong>`
+    ])
+
+    exportToPDF({
+      title: "Business Sales & Revenue Overview Report",
+      subtitle: "Top-performing diecast castings, brand revenue distribution, and net take-home margin.",
+      category: "Sales Overview",
+      kpis: [
+        { label: "Total Sales", value: `₹${totalSales.toLocaleString('en-IN')}`, sub: "Gross payments collected", color: "#f59e0b" },
+        { label: "Clean Net Profit", value: `₹${cleanTakeHomeProfit.toLocaleString('en-IN')}`, sub: `${profitMarginPercent}% Take-Home Margin`, color: "#10b981" },
+        { label: "Total Orders", value: `${totalOrdersCount} Orders`, sub: `Avg Basket: ₹${avgOrderValue.toLocaleString('en-IN')}`, color: "#3b82f6" },
+        { label: "Stock In Warehouse", value: `${totalStockUnits} Units`, sub: `₹${totalWarehouseValue.toLocaleString('en-IN')} Worth`, color: "#8b5cf6" }
+      ],
+      headers,
+      rows,
+      notes: "Top-ranking best sellers are sorted by gross revenue generated across all verified customer orders."
+    })
+
+    if (onAddToast) onAddToast("Sales Overview PDF generated! Save or print.", "success")
+  }
+
+  // 2. Tab 2: Profit per Car (Cost vs Margin) CSV & PDF
+  const handleExportProfitCalculatorCSV = () => {
+    const headers = ["Car ID", "Car Name", "Brand", "Scale", "Selling Price (INR)", `Buying Cost (${buyingCostPercent}%)`, `Packaging Cost (${deliveryPackPercent}%)`, "Clean Unit Profit (INR)", "Margin %", "Stock Units", "Total Potential Profit (INR)"]
+    const rows = cars.map(car => {
+      const unitBuyCost = Math.round(car.price * (buyingCostPercent / 100))
+      const unitPackCost = Math.round(car.price * (deliveryPackPercent / 100))
+      const unitProfit = car.price - unitBuyCost - unitPackCost
+      const marginPct = Math.round((unitProfit / car.price) * 100)
+      const potentialStockProfit = unitProfit * (car.inStock || 0)
+      return [
+        car.id,
+        car.name,
+        car.brand,
+        car.scale,
+        car.price,
+        unitBuyCost,
+        unitPackCost,
+        unitProfit,
+        `${marginPct}%`,
+        car.inStock || 0,
+        potentialStockProfit
+      ]
+    })
+
+    exportToCSV({
+      filename: `Diecast_Vault_Item_Cost_Profit_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Cost & Profit Margin sheet exported to CSV!", "success")
+  }
+
+  const handleExportProfitCalculatorPDF = () => {
+    const headers = ["Car Model", "Selling Price", `Buying (${buyingCostPercent}%)`, `Packing (${deliveryPackPercent}%)`, "Unit Profit", "Margin", "Total Stock Profit"]
+    const rows = cars.map(car => {
+      const unitBuyCost = Math.round(car.price * (buyingCostPercent / 100))
+      const unitPackCost = Math.round(car.price * (deliveryPackPercent / 100))
+      const unitProfit = car.price - unitBuyCost - unitPackCost
+      const marginPct = Math.round((unitProfit / car.price) * 100)
+      const potentialStockProfit = unitProfit * (car.inStock || 0)
+      return [
+        `<strong>${car.name}</strong> <small style="color:#6b7280">(${car.brand})</small>`,
+        `₹${car.price.toLocaleString('en-IN')}`,
+        `<span style="color:#dc2626">-₹${unitBuyCost.toLocaleString('en-IN')}</span>`,
+        `<span style="color:#d97706">-₹${unitPackCost.toLocaleString('en-IN')}</span>`,
+        `<strong style="color:#059669">+₹${unitProfit.toLocaleString('en-IN')}</strong>`,
+        `<span style="background:#ecfdf5; color:#065f46; padding:2px 6px; border-radius:4px; font-weight:700">${marginPct}%</span>`,
+        `<strong style="color:#059669">₹${potentialStockProfit.toLocaleString('en-IN')}</strong>`
+      ]
+    })
+
+    exportToPDF({
+      title: "Diecast Item Sourcing Cost & Margin Audit Report",
+      subtitle: `Calculated with ${buyingCostPercent}% Wholesale Sourcing and ${deliveryPackPercent}% Box & Courier Packing.`,
+      category: "Cost & Margin Analysis",
+      kpis: [
+        { label: "Wholesale Sourcing", value: `${buyingCostPercent}%`, sub: `₹${totalBuyingCost.toLocaleString('en-IN')} Total Cost`, color: "#ef4444" },
+        { label: "Packaging & Courier", value: `${deliveryPackPercent}%`, sub: `₹${totalDeliveryCost.toLocaleString('en-IN')} Packing Fee`, color: "#f59e0b" },
+        { label: "Clean Take-Home Profit", value: `₹${cleanTakeHomeProfit.toLocaleString('en-IN')}`, sub: `${profitMarginPercent}% Net Margin`, color: "#10b981" },
+        { label: "Models Evaluated", value: `${cars.length} Castings`, sub: `${totalStockUnits} Units In Warehouse`, color: "#3b82f6" }
+      ],
+      headers,
+      rows,
+      notes: "Unit profits and potential warehouse yields update dynamically with your active wholesale buying percentage and courier costs."
+    })
+
+    if (onAddToast) onAddToast("Profit & Margin PDF generated! Save or print.", "success")
+  }
+
+  // 3. Tab 3: Payment Methods & Payouts CSV & PDF
+  const handleExportPaymentsCSV = () => {
+    const headers = ["Payment Channel", "Orders Count", "Gross Amount Collected (INR)", "Bank Fee Rate", "Bank Fee Deducted (INR)", "Net Payout Deposited (INR)"]
+    const rows = Object.entries(paymentBreakdown).map(([key, channel]) => {
+      const fees = Math.round(channel.amount * channel.feeRate)
+      const net = channel.amount - fees
+      return [
+        channel.name,
+        channel.count,
+        channel.amount,
+        channel.feeRate > 0 ? `${(channel.feeRate * 100).toFixed(1)}%` : '0% (Free)',
+        fees,
+        net
+      ]
+    })
+
+    exportToCSV({
+      filename: `Diecast_Vault_Bank_Payouts_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Payment Methods & Payouts exported to CSV!", "success")
+  }
+
+  const handleExportPaymentsPDF = () => {
+    const headers = ["Payment Channel", "Orders Count", "Gross Amount", "Gateway Rate", "Fees Deducted", "Net Bank Deposit"]
+    const rows = Object.entries(paymentBreakdown).map(([key, channel]) => {
+      const fees = Math.round(channel.amount * channel.feeRate)
+      const net = channel.amount - fees
+      return [
+        `<strong>${channel.name}</strong>`,
+        `${channel.count} orders`,
+        `₹${channel.amount.toLocaleString('en-IN')}`,
+        channel.feeRate > 0 ? `${(channel.feeRate * 100).toFixed(1)}%` : '<span style="color:#059669">0% (Free)</span>',
+        `<span style="color:#dc2626">-₹${fees.toLocaleString('en-IN')}</span>`,
+        `<strong style="color:#059669">₹${net.toLocaleString('en-IN')}</strong>`
+      ]
+    })
+
+    exportToPDF({
+      title: "Payment Gateway Settlements & Bank Payouts Statement",
+      subtitle: "Gross customer payments collected across UPI, Credit Cards, Net Banking, and COD with bank processing fees deducted.",
+      category: "Payouts Statement",
+      kpis: [
+        { label: "Gross Payments", value: `₹${totalSales.toLocaleString('en-IN')}`, sub: `${totalOrdersCount} Total Customer Payments`, color: "#f59e0b" },
+        { label: "Bank Gateway Fees", value: `-₹${totalBankFees.toLocaleString('en-IN')}`, sub: "Processing charges", color: "#ef4444" },
+        { label: "Net Money in Bank", value: `₹${netInBank.toLocaleString('en-IN')}`, sub: "Direct bank deposit", color: "#10b981" },
+        { label: "Settlement Time", value: "24-48 Hours", sub: "Auto-payout schedule", color: "#3b82f6" }
+      ],
+      headers,
+      rows,
+      notes: "UPI transactions have 0% gateway charges. Card transactions incur standard 1.8% gateway MDR fee."
+    })
+
+    if (onAddToast) onAddToast("Bank Payout statement PDF generated! Save or print.", "success")
+  }
+
+  // 4. Tab 4: Customer Orders & Shipping CSV & PDF
+  const handleExportOrdersCSV = () => {
+    const headers = ["Order ID", "Date", "Customer & Address", "Payment Method", "Items Ordered", "Total Amount (INR)", "Status"]
+    const rows = filteredOrders.map(o => [
+      o.id,
+      o.date,
+      o.shippingAddress || 'Customer Order',
+      o.paymentMethod || 'Prepaid UPI',
+      (o.items || []).map(i => `${i.name} (x${i.quantity || 1})`).join('; '),
+      o.totalAmount || 0,
+      o.status
+    ])
+
+    exportToCSV({
+      filename: `Diecast_Vault_Customer_Orders_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Customer Orders exported to CSV successfully!", "success")
+  }
+
+  const handleExportOrdersPDF = () => {
+    const headers = ["Order ID", "Date", "Customer & Delivery Address", "Items Ordered", "Total Paid", "Status"]
+    const rows = filteredOrders.map(o => [
+      `<strong>${o.id}</strong>`,
+      o.date,
+      `<div>${o.shippingAddress || 'Skyline Towers, Flat 402'}</div><small style="color:#6b7280; font-size:11px">${o.paymentMethod || 'Prepaid UPI'}</small>`,
+      (o.items || []).map(i => `<div>${i.name} <strong style="color:#ef4444">x${i.quantity || 1}</strong></div>`).join(''),
+      `<strong style="color:#059669; font-size:13px">₹${(o.totalAmount || 0).toLocaleString('en-IN')}</strong>`,
+      `<span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:700; font-size:11px">${o.status}</span>`
+    ])
+
+    exportToPDF({
+      title: "Customer Orders & Shipping Fulfillment Report",
+      subtitle: "Official order tracking records, customer fulfillment addresses, item line lists, and dispatch statuses.",
+      category: "Orders & Shipping",
+      kpis: [
+        { label: "Orders Listed", value: `${filteredOrders.length} Orders`, sub: `${orderFilter} filter active`, color: "#3b82f6" },
+        { label: "Total Paid", value: `₹${filteredOrders.reduce((s, o) => s + (o.totalAmount || 0), 0).toLocaleString('en-IN')}`, sub: "Gross order value", color: "#10b981" },
+        { label: "Delivered", value: `${orders.filter(o => o.status === 'Delivered').length}`, sub: "Completed orders", color: "#059669" },
+        { label: "In Transit", value: `${orders.filter(o => o.status === 'In Transit').length}`, sub: "Courier on the way", color: "#f59e0b" }
+      ],
+      headers,
+      rows,
+      notes: "This document contains customer order tracking details verified from the Diecast Vault Shipping Portal."
+    })
+
+    if (onAddToast) onAddToast("Orders PDF report generated! Save or print.", "success")
+  }
+
+  // Alias for backward compatibility
+  const handleExportCSV = handleExportOrdersCSV
+  const handleExportPDF = handleExportOrdersPDF
+
+  // 5. Tab 5: VIP Customers CSV & PDF
+  const handleExportVipCSV = () => {
+    const headers = ["VIP ID", "Name", "Email", "Phone", "City", "VIP Tier", "Total Spent (INR)", "Orders Count", "Favorite Brand", "Packaging Instructions"]
+    const rows = vipList.map(c => [
+      c.id,
+      c.name,
+      c.email,
+      c.phone,
+      c.city,
+      c.tier || c.badge || 'VIP',
+      c.totalSpent || 0,
+      c.totalOrders || 0,
+      c.favBrand || 'Hot Wheels Premium',
+      c.specialHandling || c.notes || 'Mint blister pack'
+    ])
+
+    exportToCSV({
+      filename: `Diecast_Vault_VIP_Customers_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("VIP Customer registry exported to CSV!", "success")
+  }
+
+  const handleExportVipPDF = () => {
+    const totalVipSpend = vipList.reduce((s, c) => s + (c.totalSpent || 0), 0)
+    const headers = ["VIP ID", "Collector Contact", "VIP Tier", "Total Spent", "Orders", "Fav Brand", "Special Packaging"]
+    const rows = vipList.map(c => [
+      `<strong>${c.id}</strong>`,
+      `<div><strong>${c.name}</strong></div><small style="color:#6b7280">${c.email} • ${c.phone} • ${c.city}</small>`,
+      `<span style="background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:4px; font-weight:800; font-size:11px">${c.badge || `${c.tier || 'VIP'} Member`}</span>`,
+      `<strong style="color:#059669">₹${(c.totalSpent || 0).toLocaleString('en-IN')}</strong>`,
+      `${c.totalOrders || 1} orders`,
+      c.favBrand || 'Hot Wheels Premium',
+      `<div style="background:#fffbeb; padding:4px 8px; border-radius:4px; border:1px solid #fef3c7; font-size:11px; color:#b45309">📦 ${c.specialHandling || c.notes || 'Mint blister packaging'}</div>`
+    ])
+
+    exportToPDF({
+      title: "Top VIP Collectors Registry & Packaging Directory",
+      subtitle: "Top-tier collectors, purchase history, favorite castings, and custom packaging handling instructions.",
+      category: "VIP Registry",
+      kpis: [
+        { label: "VIP Collectors", value: `${vipList.length} Members`, sub: "High-value tier", color: "#f59e0b" },
+        { label: "VIP Total Spend", value: `₹${totalVipSpend.toLocaleString('en-IN')}`, sub: "Collective gross spend", color: "#10b981" },
+        { label: "Avg Spend / VIP", value: `₹${Math.round(totalVipSpend / (vipList.length || 1)).toLocaleString('en-IN')}`, sub: "Per VIP member", color: "#3b82f6" },
+        { label: "Custom Packing", value: `${vipList.length} Active`, sub: "Clamshells & Wax Seals", color: "#8b5cf6" }
+      ],
+      headers,
+      rows,
+      notes: "VIP collectors must be dispatched with pristine blister protection, plastic clamshell cases, and corner edge guards as recorded above."
+    })
+
+    if (onAddToast) onAddToast("VIP Registry PDF report generated! Save or print.", "success")
+  }
+
+  // 6. Tab 6: Warehouse Stock CSV & PDF
+  const handleExportStockCSV = () => {
+    const headers = ["Car Name", "Brand", "Scale", "Category", "Unit Price (INR)", "Units in Stock", "Total Stock Value (INR)"]
+    const rows = cars.map(c => [
+      c.name,
+      c.brand,
+      c.scale,
+      c.category || 'Diecast',
+      c.price,
+      c.inStock || 0,
+      c.price * (c.inStock || 0)
+    ])
+
+    exportToCSV({
+      filename: `Diecast_Vault_Warehouse_Stock_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Warehouse Stock Valuation exported to CSV!", "success")
+  }
+
+  const handleExportStockPDF = () => {
+    const headers = ["Car Model", "Brand & Scale", "Unit Price", "Stock Units", "Total Worth"]
+    const rows = cars.map(c => [
+      `<strong>${c.name}</strong>`,
+      `${c.brand} (${c.scale})`,
+      `₹${c.price.toLocaleString('en-IN')}`,
+      `<span style="font-weight:700">${c.inStock} units</span>`,
+      `<strong style="color:#059669">₹${(c.price * (c.inStock || 0)).toLocaleString('en-IN')}</strong>`
+    ])
+
+    exportToPDF({
+      title: "Warehouse Inventory Valuation & Stock Report",
+      subtitle: "Complete diecast catalog stock inventory quantities, unit values, and total warehouse asset worth.",
+      category: "Stock Valuation",
+      kpis: [
+        { label: "Total Models", value: `${cars.length} Models`, sub: "Distinct car castings", color: "#3b82f6" },
+        { label: "Total Units", value: `${totalStockUnits} Units`, sub: "Available in warehouse", color: "#f59e0b" },
+        { label: "Warehouse Worth", value: `₹${totalWarehouseValue.toLocaleString('en-IN')}`, sub: "Total retail asset value", color: "#10b981" },
+        { label: "Avg Price", value: `₹${Math.round(totalWarehouseValue / (totalStockUnits || 1)).toLocaleString('en-IN')}`, sub: "Per casting unit", color: "#8b5cf6" }
+      ],
+      headers,
+      rows,
+      notes: "Stock valuation calculated based on current catalog selling price and remaining warehouse count."
+    })
+
+    if (onAddToast) onAddToast("Warehouse Valuation PDF generated! Save or print.", "success")
+  }
+
+  // 7. Master PDF: Complete Business Master Dossier (All 6 Pages in One PDF)
+  const handleExportMasterPDF = () => {
+    const totalVipSpend = vipList.reduce((s, c) => s + (c.totalSpent || 0), 0)
+
+    const sections = [
+      // 01. Sales Overview
+      {
+        title: "Sales & Revenue Performance Overview",
+        subtitle: "Top-ranked best-selling diecast models and revenue yields across customer orders.",
+        kpis: [
+          { label: "Total Sales", value: `₹${totalSales.toLocaleString('en-IN')}`, color: "#f59e0b" },
+          { label: "Clean Net Profit", value: `₹${cleanTakeHomeProfit.toLocaleString('en-IN')}`, sub: `${profitMarginPercent}% Margin`, color: "#10b981" },
+          { label: "Orders Count", value: `${totalOrdersCount}`, color: "#3b82f6" },
+          { label: "Warehouse Asset", value: `₹${totalWarehouseValue.toLocaleString('en-IN')}`, color: "#8b5cf6" }
+        ],
+        headers: ["Rank", "Diecast Model", "Brand & Scale", "Unit Price", "Units Sold", "Total Made"],
+        rows: bestSellers.slice(0, 10).map((item, idx) => [
+          `<strong>#${idx + 1}</strong>`,
+          `<strong>${item.name}</strong>`,
+          `${item.brand} (${item.scale || '1:64'})`,
+          `₹${item.price.toLocaleString('en-IN')}`,
+          `<strong>${item.unitsSold} units</strong>`,
+          `<strong style="color:#059669">₹${item.grossSales.toLocaleString('en-IN')}</strong>`
+        ])
+      },
+      // 02. Profit per Car
+      {
+        title: "Profit per Car & Sourcing Cost vs Margin Analysis",
+        subtitle: `Wholesale sourcing calculated at ${buyingCostPercent}%, Box & Courier packaging calculated at ${deliveryPackPercent}%.`,
+        kpis: [
+          { label: "Sourcing Cost", value: `${buyingCostPercent}% (₹${totalBuyingCost.toLocaleString('en-IN')})`, color: "#ef4444" },
+          { label: "Packaging & Courier", value: `${deliveryPackPercent}% (₹${totalDeliveryCost.toLocaleString('en-IN')})`, color: "#f59e0b" },
+          { label: "Net Take-Home", value: `${profitMarginPercent}% (₹${cleanTakeHomeProfit.toLocaleString('en-IN')})`, color: "#10b981" }
+        ],
+        headers: ["Car Model", "Selling Price", `Buying (${buyingCostPercent}%)`, `Packing (${deliveryPackPercent}%)`, "Unit Profit", "Margin", "Total Stock Profit"],
+        rows: cars.slice(0, 15).map(car => {
+          const unitBuyCost = Math.round(car.price * (buyingCostPercent / 100))
+          const unitPackCost = Math.round(car.price * (deliveryPackPercent / 100))
+          const unitProfit = car.price - unitBuyCost - unitPackCost
+          const marginPct = Math.round((unitProfit / car.price) * 100)
+          const potentialStockProfit = unitProfit * (car.inStock || 0)
+          return [
+            `<strong>${car.name}</strong> <small>(${car.brand})</small>`,
+            `₹${car.price.toLocaleString('en-IN')}`,
+            `<span style="color:#dc2626">-₹${unitBuyCost.toLocaleString('en-IN')}</span>`,
+            `<span style="color:#d97706">-₹${unitPackCost.toLocaleString('en-IN')}</span>`,
+            `<strong style="color:#059669">+₹${unitProfit.toLocaleString('en-IN')}</strong>`,
+            `<strong>${marginPct}%</strong>`,
+            `<strong style="color:#059669">₹${potentialStockProfit.toLocaleString('en-IN')}</strong>`
+          ]
+        })
+      },
+      // 03. Payments & Gateway Settlements
+      {
+        title: "Payment Gateway Settlements & Net Bank Payouts",
+        subtitle: "Gross customer collections across UPI, Credit Cards, Net Banking, and COD with bank processing fees deducted.",
+        kpis: [
+          { label: "Gross Payments", value: `₹${totalSales.toLocaleString('en-IN')}`, color: "#f59e0b" },
+          { label: "Bank Charges", value: `-₹${totalBankFees.toLocaleString('en-IN')}`, color: "#ef4444" },
+          { label: "Net in Bank", value: `₹${netInBank.toLocaleString('en-IN')}`, color: "#10b981" }
+        ],
+        headers: ["Payment Channel", "Orders Count", "Gross Amount", "Gateway Rate", "Fees Deducted", "Net Bank Deposit"],
+        rows: Object.entries(paymentBreakdown).map(([key, channel]) => {
+          const fees = Math.round(channel.amount * channel.feeRate)
+          const net = channel.amount - fees
+          return [
+            `<strong>${channel.name}</strong>`,
+            `${channel.count} orders`,
+            `₹${channel.amount.toLocaleString('en-IN')}`,
+            channel.feeRate > 0 ? `${(channel.feeRate * 100).toFixed(1)}%` : '<span style="color:#059669">0% (Free)</span>',
+            `<span style="color:#dc2626">-₹${fees.toLocaleString('en-IN')}</span>`,
+            `<strong style="color:#059669">₹${net.toLocaleString('en-IN')}</strong>`
+          ]
+        })
+      },
+      // 04. Customer Orders
+      {
+        title: "Customer Orders & Delivery Dispatch Log",
+        subtitle: "Verified customer purchases, delivery addresses, item lineups, and live shipping status.",
+        kpis: [
+          { label: "Orders Logged", value: `${orders.length} Orders`, color: "#3b82f6" },
+          { label: "Delivered", value: `${orders.filter(o => o.status === 'Delivered').length}`, color: "#10b981" },
+          { label: "In Transit", value: `${orders.filter(o => o.status === 'In Transit').length}`, color: "#f59e0b" }
+        ],
+        headers: ["Order ID", "Date", "Customer & Delivery Address", "Items Ordered", "Total Paid", "Status"],
+        rows: orders.map(o => [
+          `<strong>${o.id}</strong>`,
+          o.date,
+          `<div>${o.shippingAddress || 'Skyline Towers, Flat 402'}</div><small style="color:#6b7280">${o.paymentMethod || 'Prepaid UPI'}</small>`,
+          (o.items || []).map(i => `<div>${i.name} <strong style="color:#ef4444">x${i.quantity || 1}</strong></div>`).join(''),
+          `<strong style="color:#059669">₹${(o.totalAmount || 0).toLocaleString('en-IN')}</strong>`,
+          `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:700; font-size:11px">${o.status}</span>`
+        ])
+      },
+      // 05. VIP Customers
+      {
+        title: "VIP Collector Registry & Special Packaging Instructions",
+        subtitle: "High-value buyers, total lifetime spend, preferred brands, and custom protective shipping instructions.",
+        kpis: [
+          { label: "VIP Collectors", value: `${vipList.length} Members`, color: "#f59e0b" },
+          { label: "VIP Spend", value: `₹${totalVipSpend.toLocaleString('en-IN')}`, color: "#10b981" }
+        ],
+        headers: ["VIP ID", "Collector Contact", "VIP Tier", "Total Spent", "Orders", "Fav Brand", "Special Packaging"],
+        rows: vipList.map(c => [
+          `<strong>${c.id}</strong>`,
+          `<div><strong>${c.name}</strong></div><small style="color:#6b7280">${c.email} • ${c.phone} • ${c.city}</small>`,
+          `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-weight:800">${c.badge || `${c.tier || 'VIP'} Member`}</span>`,
+          `<strong style="color:#059669">₹${(c.totalSpent || 0).toLocaleString('en-IN')}</strong>`,
+          `${c.totalOrders || 1} orders`,
+          c.favBrand || 'Hot Wheels Premium',
+          `<div style="background:#fffbeb; padding:4px 8px; border-radius:4px; border:1px solid #fef3c7; font-size:11px; color:#b45309">📦 ${c.specialHandling || c.notes || 'Mint blister card'}</div>`
+        ])
+      },
+      // 06. Warehouse Stock
+      {
+        title: "Warehouse Inventory Stock & Asset Valuation",
+        subtitle: "Complete physical catalog stock count, unit selling prices, and total inventory value.",
+        kpis: [
+          { label: "Total Models", value: `${cars.length} Models`, color: "#3b82f6" },
+          { label: "Total Units", value: `${totalStockUnits} Units`, color: "#f59e0b" },
+          { label: "Warehouse Worth", value: `₹${totalWarehouseValue.toLocaleString('en-IN')}`, color: "#10b981" }
+        ],
+        headers: ["Car Model", "Brand & Scale", "Unit Price", "Stock Units", "Total Worth"],
+        rows: cars.map(c => [
+          `<strong>${c.name}</strong>`,
+          `${c.brand} (${c.scale})`,
+          `₹${c.price.toLocaleString('en-IN')}`,
+          `<span style="font-weight:700">${c.inStock} units</span>`,
+          `<strong style="color:#059669">₹${(c.price * (c.inStock || 0)).toLocaleString('en-IN')}</strong>`
+        ])
+      }
+    ]
+
+    exportMultiSectionPDF({
+      title: "Diecast Vault • Complete Business Intelligence Master Dossier",
+      subtitle: "Official executive financial performance, cost margins, bank settlements, customer orders, VIP registry, and warehouse inventory valuation.",
+      category: "Executive Master Dossier",
+      kpis: [
+        { label: "Total Money Made", value: `₹${totalSales.toLocaleString('en-IN')}`, sub: "Gross customer payments", color: "#f59e0b" },
+        { label: "Clean Net Profit", value: `₹${cleanTakeHomeProfit.toLocaleString('en-IN')}`, sub: `${profitMarginPercent}% Take-Home Margin`, color: "#10b981" },
+        { label: "Customer Orders", value: `${totalOrdersCount} Orders`, sub: `Avg Basket: ₹${avgOrderValue.toLocaleString('en-IN')}`, color: "#3b82f6" },
+        { label: "Warehouse Worth", value: `₹${totalWarehouseValue.toLocaleString('en-IN')}`, sub: `${totalStockUnits} Units in Warehouse`, color: "#8b5cf6" }
+      ],
+      sections,
+      notes: "This comprehensive executive document consolidates all operational, customer fulfillment, and inventory data generated from the Diecast Vault Store Owner Portal."
+    })
+
+    if (onAddToast) onAddToast("Complete Master Business Dossier PDF generated! Save or print all 6 sections.", "success")
+  }
+
+  // Active page export dispatcher
+  const handleExportActivePagePDF = () => {
+    switch (activeTab) {
+      case 'overview':
+        handleExportOverviewPDF()
+        break
+      case 'profit_calculator':
+        handleExportProfitCalculatorPDF()
+        break
+      case 'payments':
+        handleExportPaymentsPDF()
+        break
+      case 'orders':
+        handleExportOrdersPDF()
+        break
+      case 'vip_customers':
+        handleExportVipPDF()
+        break
+      case 'stock_value':
+        handleExportStockPDF()
+        break
+      default:
+        handleExportMasterPDF()
+    }
+  }
+
+  // Dynamic label for active tab PDF button
+  const getActiveTabExportLabel = () => {
+    switch (activeTab) {
+      case 'overview': return 'Export Sales PDF'
+      case 'profit_calculator': return 'Export Margins PDF'
+      case 'payments': return 'Export Payouts PDF'
+      case 'orders': return 'Export Orders PDF'
+      case 'vip_customers': return 'Export VIPs PDF'
+      case 'stock_value': return 'Export Stock PDF'
+      default: return 'Export PDF'
+    }
   }
 
   // Generate Courier Tracking Slip
@@ -272,20 +784,39 @@ export default function OwnerDashboardModal({
         </div>
 
         <div className="owner-actions-top">
+          {/* 🌟 Master PDF - Export All 6 Pages in One */}
+          <button
+            className="btn-primary btn-sm"
+            onClick={handleExportMasterPDF}
+            title="Export all 6 pages into one complete Master Business Dossier PDF"
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b 0%, #10b981 100%)',
+              color: '#000',
+              fontWeight: 800,
+              border: 'none',
+              boxShadow: '0 0 16px rgba(245, 158, 11, 0.3)'
+            }}
+          >
+            <Sparkles size={14} color="#000" /> Export All (Master PDF)
+          </button>
+
+          {/* Dynamic Active Tab PDF */}
           <button
             className="btn-secondary btn-sm"
-            onClick={handleExportCSV}
-            title="Download Excel / CSV Sales Report"
+            onClick={handleExportActivePagePDF}
+            title={`Export PDF for currently open tab: ${activeTab}`}
+            style={{ borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24', fontWeight: 700 }}
           >
-            <Download size={14} /> Download Report
+            <FileText size={14} color="#fbbf24" /> {getActiveTabExportLabel()}
           </button>
+
           {onOpenStorefront && (
             <button
               className="btn-secondary btn-sm"
               onClick={onOpenStorefront}
               title="See what customers see"
             >
-              <Car size={14} /> Customer Storefront
+              <Car size={14} /> Storefront
             </button>
           )}
           {onOpenAdmin && (
@@ -297,7 +828,7 @@ export default function OwnerDashboardModal({
                 onOpenAdmin()
               }}
             >
-              <Sliders size={14} /> Add / Edit Cars
+              <Wrench size={14} /> Add / Edit Cars
             </button>
           )}
         </div>
@@ -409,14 +940,32 @@ export default function OwnerDashboardModal({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <BarChart3 size={18} color="#f59e0b" />
                   <h3 style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: 800 }}>
-                    Best Selling Diecast Models
+                    Best Selling Diecast Models & Sales Performance
                   </h3>
                 </div>
                 <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   Top revenue-generating diecast models ordered by collectors (picture on top with full details below).
                 </p>
               </div>
-              <span className="badge-pill">Top Performers</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <button
+                  className="btn-secondary btn-sm"
+                  onClick={handleExportOverviewCSV}
+                  title="Export Sales Overview to CSV"
+                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                >
+                  <FileSpreadsheet size={13} color="#34d399" /> Overview CSV
+                </button>
+                <button
+                  className="btn-secondary btn-sm"
+                  onClick={handleExportOverviewPDF}
+                  title="Export Sales Overview to PDF"
+                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+                >
+                  <FileText size={13} color="#fbbf24" /> Overview PDF
+                </button>
+                <span className="badge-pill">Top Performers</span>
+              </div>
             </div>
 
             <div className="bestsellers-photo-grid">
@@ -593,51 +1142,195 @@ export default function OwnerDashboardModal({
               </div>
             </div>
 
-            <div className="cogs-sliders-grid">
-              <div className="slider-box">
-                <div className="slider-label-row">
-                  <span>Wholesale Buying Cost (What you pay per car)</span>
-                  <strong>{buyingCostPercent}% of Selling Price</strong>
+            <div className="cogs-control-grid">
+              {/* Wholesale Buying Cost Control */}
+              <div className="cost-input-box">
+                <div className="cost-input-header">
+                  <div className="cost-input-title">
+                    <span className="cost-dot buying" />
+                    <div>
+                      <strong>Wholesale Sourcing Cost</strong>
+                      <p>What you pay suppliers per diecast car</p>
+                    </div>
+                  </div>
+                  <div className="cost-value-badge buying">
+                    {buyingCostPercent}%
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="20"
-                  max="60"
-                  value={buyingCostPercent}
-                  onChange={(e) => setBuyingCostPercent(Number(e.target.value))}
-                  className="custom-range-slider"
-                />
-                <div className="slider-ticks">
-                  <span>20% (Low Cost / Huge Profit)</span>
-                  <span>38% (Normal Wholesale)</span>
-                  <span>60% (High Cost)</span>
+
+                <div className="cost-input-controls">
+                  <div className="cost-stepper">
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setBuyingCostPercent(prev => Math.max(10, prev - 5))}
+                      title="Decrease by 5%"
+                    >
+                      -5%
+                    </button>
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setBuyingCostPercent(prev => Math.max(10, prev - 1))}
+                      title="Decrease by 1%"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <div className="cost-number-field">
+                      <input
+                        type="number"
+                        min="10"
+                        max="80"
+                        value={buyingCostPercent}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          if (!isNaN(val)) setBuyingCostPercent(Math.min(80, Math.max(10, val)))
+                        }}
+                      />
+                      <span>%</span>
+                    </div>
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setBuyingCostPercent(prev => Math.min(80, prev + 1))}
+                      title="Increase by 1%"
+                    >
+                      <Plus size={14} />
+                    </button>
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setBuyingCostPercent(prev => Math.min(80, prev + 5))}
+                      title="Increase by 5%"
+                    >
+                      +5%
+                    </button>
+                  </div>
+
+                  <div className="cost-preset-chips">
+                    <span className="preset-label">Presets:</span>
+                    {[25, 35, 40, 50].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`preset-chip ${buyingCostPercent === preset ? 'active' : ''}`}
+                        onClick={() => setBuyingCostPercent(preset)}
+                      >
+                        {preset}% {preset <= 25 ? 'High Margin' : (preset === 35 ? 'Standard' : 'High Cost')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="slider-box">
-                <div className="slider-label-row">
-                  <span>Box, Bubble Wrap & Courier Cost</span>
-                  <strong>{deliveryPackPercent}% of Selling Price</strong>
+              {/* Courier & Box Packaging Control */}
+              <div className="cost-input-box">
+                <div className="cost-input-header">
+                  <div className="cost-input-title">
+                    <span className="cost-dot pack" />
+                    <div>
+                      <strong>Box, Bubble Wrap & Courier</strong>
+                      <p>Packaging supplies and courier shipping per car</p>
+                    </div>
+                  </div>
+                  <div className="cost-value-badge pack">
+                    {deliveryPackPercent}%
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="2"
-                  max="15"
-                  value={deliveryPackPercent}
-                  onChange={(e) => setDeliveryPackPercent(Number(e.target.value))}
-                  className="custom-range-slider"
-                />
-                <div className="slider-ticks">
-                  <span>2% (Basic Box)</span>
-                  <span>6% (Clamshell + Air Courier)</span>
-                  <span>15% (Extra Heavy)</span>
+
+                <div className="cost-input-controls">
+                  <div className="cost-stepper">
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setDeliveryPackPercent(prev => Math.max(1, prev - 2))}
+                      title="Decrease by 2%"
+                    >
+                      -2%
+                    </button>
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setDeliveryPackPercent(prev => Math.max(1, prev - 1))}
+                      title="Decrease by 1%"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <div className="cost-number-field">
+                      <input
+                        type="number"
+                        min="1"
+                        max="25"
+                        value={deliveryPackPercent}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          if (!isNaN(val)) setDeliveryPackPercent(Math.min(25, Math.max(1, val)))
+                        }}
+                      />
+                      <span>%</span>
+                    </div>
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setDeliveryPackPercent(prev => Math.min(25, prev + 1))}
+                      title="Increase by 1%"
+                    >
+                      <Plus size={14} />
+                    </button>
+                    <button 
+                      type="button"
+                      className="cost-step-btn"
+                      onClick={() => setDeliveryPackPercent(prev => Math.min(25, prev + 2))}
+                      title="Increase by 2%"
+                    >
+                      +2%
+                    </button>
+                  </div>
+
+                  <div className="cost-preset-chips">
+                    <span className="preset-label">Presets:</span>
+                    {[3, 5, 7, 10].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`preset-chip ${deliveryPackPercent === preset ? 'active' : ''}`}
+                        onClick={() => setDeliveryPackPercent(preset)}
+                      >
+                        {preset}% {preset === 3 ? 'Basic Box' : (preset === 7 ? 'Standard' : 'Air Courier')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Sourcing Cost Breakdown Table */}
-          <div className="owner-orders-table-wrapper" style={{ marginTop: '1.5rem' }}>
+          <div className="table-filter-bar" style={{ marginTop: '1.75rem', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Individual cost breakdown, unit profit, and stock yield for <strong>{cars.length}</strong> catalog castings.
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportProfitCalculatorCSV}
+                title="Export Sourcing Costs & Profit Margins as CSV"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+              >
+                <FileSpreadsheet size={13} color="#34d399" /> Margin CSV
+              </button>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportProfitCalculatorPDF}
+                title="Export Sourcing Costs & Profit Margins as PDF"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+              >
+                <FileText size={13} color="#fbbf24" /> Margin PDF
+              </button>
+            </div>
+          </div>
+
+          <div className="owner-orders-table-wrapper">
             <table className="owner-orders-table">
               <thead>
                 <tr>
@@ -727,7 +1420,31 @@ export default function OwnerDashboardModal({
             </div>
           </div>
 
-          {/* Payment Methods Breakdown */}
+          {/* Payment Methods Breakdown Toolbar */}
+          <div className="table-filter-bar" style={{ marginTop: '1.5rem', marginBottom: '1.25rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Channel breakdown across UPI, Credit Cards, Net Banking, and COD with bank MDR fees.
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportPaymentsCSV}
+                title="Export Bank Payouts Ledger as CSV"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+              >
+                <FileSpreadsheet size={13} color="#34d399" /> Payouts CSV
+              </button>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportPaymentsPDF}
+                title="Export Bank Payouts Statement as PDF"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+              >
+                <FileText size={13} color="#fbbf24" /> Payouts PDF
+              </button>
+            </div>
+          </div>
+
           <div className="payment-channels-grid">
             {Object.entries(paymentBreakdown).map(([key, channel]) => {
               const ChannelIcon = channel.icon
@@ -792,9 +1509,27 @@ export default function OwnerDashboardModal({
               </button>
             </div>
 
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Showing {filteredOrders.length} customer orders
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Showing {filteredOrders.length} customer orders
+              </span>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportCSV}
+                title="Export Filtered Orders as CSV"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+              >
+                <FileSpreadsheet size={13} color="#34d399" /> Orders CSV
+              </button>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportPDF}
+                title="Export Filtered Orders as PDF"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+              >
+                <FileText size={13} color="#fbbf24" /> Orders PDF
+              </button>
+            </div>
           </div>
 
           <div className="owner-orders-table-wrapper">
@@ -899,6 +1634,30 @@ export default function OwnerDashboardModal({
                 <span className="metric-value">₹{totalWarehouseValue.toLocaleString('en-IN')}</span>
                 <span className="metric-sub text-green">Total value when all units sell</span>
               </div>
+            </div>
+          </div>
+
+          <div className="table-filter-bar" style={{ marginBottom: '1rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Detailed breakdown of <strong>{cars.length}</strong> catalog castings and warehouse unit values.
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportStockCSV}
+                title="Export Stock Valuation as CSV"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+              >
+                <FileSpreadsheet size={13} color="#34d399" /> Stock CSV
+              </button>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={handleExportStockPDF}
+                title="Export Stock Valuation as PDF"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+              >
+                <FileText size={13} color="#fbbf24" /> Stock PDF
+              </button>
             </div>
           </div>
 
@@ -1049,7 +1808,7 @@ export default function OwnerDashboardModal({
   if (isFullView) {
     return (
       <div className="owner-full-page-wrapper">
-        <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: '1400px' }}>
+        <div className="owner-full-page-container">
           {content}
         </div>
       </div>

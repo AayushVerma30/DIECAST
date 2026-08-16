@@ -2,8 +2,10 @@ import React, { useState } from 'react'
 import { 
   Crown, Award, Star, Search, Plus, Download, Mail, Phone, 
   MapPin, ShieldCheck, Gift, Edit3, Check, X, Sparkles, Send, 
-  ShoppingBag, ExternalLink, Heart, Tag, UserPlus, Filter, Trash2
+  ShoppingBag, ExternalLink, Heart, Tag, UserPlus, Filter, Trash2,
+  FileSpreadsheet, FileText
 } from 'lucide-react'
+import { exportToCSV, exportToPDF } from '../utils/exportUtils'
 
 export const INITIAL_VIP_CUSTOMERS = [
   {
@@ -158,27 +160,55 @@ export default function VipCustomersPage({ onAddToast }) {
     const headers = ["Customer ID", "Name", "Email", "Phone", "City", "VIP Tier", "Total Spent (INR)", "Orders", "Favorite Brand", "Packaging Instructions"]
     const rows = customers.map(c => [
       c.id,
-      `"${c.name}"`,
-      `"${c.email}"`,
-      `"${c.phone}"`,
-      `"${c.city}"`,
-      `"${c.tier}"`,
+      c.name,
+      c.email,
+      c.phone,
+      c.city,
+      c.tier,
       c.totalSpent,
       c.totalOrders,
-      `"${c.favBrand}"`,
-      `"${c.specialHandling}"`
+      c.favBrand,
+      c.specialHandling || c.notes
     ])
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n")
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `Diecast_Vault_VIP_Customers_${new Date().toISOString().slice(0,10)}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    exportToCSV({
+      filename: `Diecast_Vault_VIP_Customers_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
 
     if (onAddToast) onAddToast("VIP Customer directory exported to CSV!", "success")
+  }
+
+  // Export PDF
+  const handleExportVipPDF = () => {
+    const headers = ["VIP ID", "Collector Contact", "VIP Tier", "Total Spent", "Orders", "Fav Brand", "Special Packaging"]
+    const rows = customers.map(c => [
+      `<strong>${c.id}</strong>`,
+      `<div><strong>${c.name}</strong></div><small style="color:#6b7280">${c.email} • ${c.phone} • ${c.city}</small>`,
+      `<span style="background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:4px; font-weight:800; font-size:11px">${c.tier} VIP</span>`,
+      `<strong style="color:#059669">₹${(c.totalSpent || 0).toLocaleString('en-IN')}</strong>`,
+      `${c.totalOrders} orders`,
+      c.favBrand,
+      `<div style="background:#fffbeb; padding:4px 8px; border-radius:4px; border:1px solid #fef3c7; font-size:11px; color:#b45309">📦 ${c.specialHandling || c.notes}</div>`
+    ])
+
+    exportToPDF({
+      title: "VIP Collector Registry & Packaging Directory",
+      subtitle: "Top-tier collectors, purchase history, favorite castings, and custom packaging handling instructions.",
+      category: "VIP Registry",
+      kpis: [
+        { label: "Total VIP Members", value: `${customers.length} Collectors`, sub: "High-value tier", color: "#f59e0b" },
+        { label: "VIP Total Spend", value: `₹${totalVipRevenue.toLocaleString('en-IN')}`, sub: "Collective gross spend", color: "#10b981" },
+        { label: "VIP Total Orders", value: `${totalVipOrders} Orders`, sub: `Avg Spend: ₹${avgVipSpend.toLocaleString('en-IN')}`, color: "#3b82f6" },
+        { label: "Diamond Tier", value: `${customers.filter(c => c.tier === 'Diamond').length}`, sub: "VIP spend > ₹25k", color: "#8b5cf6" }
+      ],
+      headers,
+      rows,
+      notes: "VIP collectors must be dispatched with pristine blister protection, plastic clamshell cases, and corner edge guards as recorded above."
+    })
+
+    if (onAddToast) onAddToast("VIP Directory PDF report generated! Save or print.", "success")
   }
 
   // Save Note
@@ -254,7 +284,15 @@ export default function VipCustomersPage({ onAddToast }) {
             onClick={handleExportVipCSV}
             title="Download CSV spreadsheet of all VIP customers"
           >
-            <Download size={14} /> Export VIP List
+            <FileSpreadsheet size={14} color="#34d399" /> Export CSV
+          </button>
+          <button 
+            className="btn-secondary btn-sm"
+            onClick={handleExportVipPDF}
+            title="Download and print formatted PDF of VIP directory"
+            style={{ borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
+          >
+            <FileText size={14} color="#fbbf24" /> Export PDF
           </button>
           <button 
             className="btn-primary btn-sm"

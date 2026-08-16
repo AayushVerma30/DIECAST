@@ -2,9 +2,11 @@ import React, { useState, useRef } from 'react'
 import { 
   X, Wrench, Plus, Edit3, Trash2, Search, Filter, Image, 
   Upload, CheckCircle2, AlertTriangle, Sparkles, RefreshCw, 
-  Eye, Save, Tag, DollarSign, Layers, ChevronRight
+  Eye, Save, Tag, DollarSign, Layers, ChevronRight, Crown,
+  FileSpreadsheet, FileText
 } from 'lucide-react'
 import { CARS_DATA } from '../data/carsData'
+import { exportToCSV, exportToPDF } from '../utils/exportUtils'
 
 const SAMPLE_PRESET_IMAGES = [
   { label: 'Skyline R34 Blue', url: CARS_DATA[0]?.images[0] },
@@ -161,6 +163,62 @@ export default function AdminInventoryModal({
     }
   }
 
+  // Export Inventory CSV
+  const handleExportInventoryCSV = () => {
+    const headers = ["Car ID", "Car Name", "Brand", "Scale", "Category", "Price (INR)", "Units in Stock", "Rating", "Total Asset Value (INR)"]
+    const rows = cars.map(c => [
+      c.id,
+      c.name,
+      c.brand,
+      c.scale,
+      c.category || 'Diecast',
+      c.price,
+      c.inStock || 0,
+      c.rating || 4.8,
+      c.price * (c.inStock || 0)
+    ])
+
+    exportToCSV({
+      filename: `Diecast_Vault_Inventory_Catalog_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Inventory Catalog exported to CSV!", "success")
+  }
+
+  // Export Inventory PDF
+  const handleExportInventoryPDF = () => {
+    const headers = ["Car Model", "Brand & Scale", "Category", "Unit Price", "Stock Units", "Stock Value"]
+    const rows = cars.map(c => [
+      `<strong>${c.name}</strong>`,
+      `${c.brand} (${c.scale})`,
+      `<span style="background:#f3f4f6; color:#374151; padding:2px 6px; border-radius:4px; font-size:11px">${c.category || 'Diecast'}</span>`,
+      `₹${c.price.toLocaleString('en-IN')}`,
+      `<strong style="color:${c.inStock < 10 ? '#ef4444' : '#111'}">${c.inStock} units</strong>`,
+      `<strong style="color:#059669">₹${(c.price * (c.inStock || 0)).toLocaleString('en-IN')}</strong>`
+    ])
+
+    const totalVal = cars.reduce((sum, c) => sum + (c.price * (c.inStock || 0)), 0)
+
+    exportToPDF({
+      title: "Diecast Catalog & Inventory Registry",
+      subtitle: "Official stock registry of diecast miniature models, scales, pricing, and stock valuation.",
+      category: "Inventory Registry",
+      kpis: [
+        { label: "Total Models", value: `${cars.length} Models`, sub: "Distinct castings", color: "#3b82f6" },
+        { label: "Total Stock Units", value: `${totalStockCount} Units`, sub: "Available stock", color: "#f59e0b" },
+        { label: "Low Stock Alert", value: `${lowStockCount} Models`, sub: "< 10 units remaining", color: "#ef4444" },
+        { label: "Inventory Asset Value", value: `₹${totalVal.toLocaleString('en-IN')}`, sub: "Total selling worth", color: "#10b981" }
+      ],
+      headers,
+      rows,
+      notes: "Stock values reflect live warehouse availability and active pricing on Diecast Vault."
+    })
+
+    if (onAddToast) onAddToast("Inventory Catalog PDF generated! Save or print.", "success")
+  }
+
   const content = (
     <div className={`admin-dialog-inner ${isFullView ? 'full-view' : 'modal-mode'}`}>
       {!isFullView && onClose && (
@@ -183,13 +241,28 @@ export default function AdminInventoryModal({
         </div>
 
         <div className="admin-top-actions">
+          <button 
+            className="btn-secondary btn-sm"
+            onClick={handleExportInventoryCSV}
+            title="Download Inventory CSV"
+          >
+            <FileSpreadsheet size={14} color="#34d399" /> Export CSV
+          </button>
+          <button 
+            className="btn-secondary btn-sm"
+            onClick={handleExportInventoryPDF}
+            title="Generate and print Catalog PDF"
+            style={{ borderColor: 'rgba(16, 185, 129, 0.4)', color: '#34d399' }}
+          >
+            <FileText size={14} color="#34d399" /> Export PDF
+          </button>
           {onOpenStorefront && (
             <button 
               className="btn-secondary btn-sm"
               onClick={onOpenStorefront}
               title="View Live Storefront"
             >
-              <Eye size={14} /> View Storefront
+              <Eye size={14} /> Storefront
             </button>
           )}
           {onOpenOwner && (
@@ -217,7 +290,7 @@ export default function AdminInventoryModal({
             className="btn-primary btn-sm"
             onClick={handleOpenAdd}
           >
-            <Plus size={16} /> Add New Diecast Model
+            <Plus size={16} /> Add New Model
           </button>
         </div>
       </div>
@@ -615,7 +688,7 @@ export default function AdminInventoryModal({
   if (isFullView) {
     return (
       <div className="admin-full-page-wrapper">
-        <div className="container" style={{ padding: '2rem 1.5rem', maxWidth: '1400px' }}>
+        <div className="admin-full-page-container">
           {content}
         </div>
       </div>

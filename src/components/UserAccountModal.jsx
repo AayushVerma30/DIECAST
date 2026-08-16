@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { X, Package, Receipt, User, Clock, CheckCircle2, Truck, ShieldCheck, ArrowUpRight, Eye, Settings, Save, Sparkles, Car, Camera, Trash2, Upload } from 'lucide-react'
+import { X, Package, Receipt, User, Clock, CheckCircle2, Truck, ShieldCheck, ArrowUpRight, Eye, Settings, Save, Sparkles, Car, Camera, Trash2, Upload, FileSpreadsheet, FileText } from 'lucide-react'
+import { exportToCSV, exportToPDF } from '../utils/exportUtils'
 
 export default function UserAccountModal({ 
   isOpen, 
@@ -105,6 +106,101 @@ export default function UserAccountModal({
     if (onAddToast) {
       onAddToast("Profile details updated successfully!", "success")
     }
+  }
+
+  // Export Customer Orders
+  const handleExportCustomerOrdersCSV = () => {
+    const headers = ["Order ID", "Date", "Items", "Payment", "Total (INR)", "Status"]
+    const rows = orders.map(o => [
+      o.id,
+      o.date,
+      (o.items || []).map(i => `${i.name} (x${i.quantity})`).join('; '),
+      o.paymentMethod || 'Prepaid UPI',
+      o.totalAmount || 0,
+      o.status
+    ])
+
+    exportToCSV({
+      filename: `My_Diecast_Orders_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Orders history downloaded as CSV!", "success")
+  }
+
+  const handleExportCustomerOrdersPDF = () => {
+    const headers = ["Order ID", "Date Placed", "Diecast Items", "Payment Mode", "Amount Paid", "Status"]
+    const rows = orders.map(o => [
+      `<strong>${o.id}</strong>`,
+      o.date,
+      (o.items || []).map(i => `<div>${i.name} <strong>x${i.quantity || 1}</strong></div>`).join(''),
+      o.paymentMethod || 'Prepaid UPI',
+      `<strong style="color:#059669">₹${(o.totalAmount || 0).toLocaleString('en-IN')}</strong>`,
+      `<span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:700; font-size:11px">${o.status}</span>`
+    ])
+
+    exportToPDF({
+      title: `${profileForm.name}'s Collector Order Statement`,
+      subtitle: `Official invoice & delivery fulfillment record for ${profileForm.email}`,
+      category: "Customer Statement",
+      kpis: [
+        { label: "Total Orders", value: `${orders.length} Orders`, sub: "Completed purchases", color: "#3b82f6" },
+        { label: "Total Spent", value: `₹${totalSpent.toLocaleString('en-IN')}`, sub: "Lifetime spend", color: "#10b981" },
+        { label: "Models In Garage", value: `${totalModelsPurchased} Units`, sub: "Collector vault", color: "#f59e0b" }
+      ],
+      headers,
+      rows,
+      notes: "Thank you for collecting with Diecast Vault. Keep this statement for warranty and authenticity tracking."
+    })
+
+    if (onAddToast) onAddToast("Collector order statement PDF ready to print/save!", "success")
+  }
+
+  // Export Transactions
+  const handleExportTxnCSV = () => {
+    const headers = ["Date", "Transaction ID", "Payment Method", "Status", "Amount (INR)"]
+    const rows = transactions.map(t => [
+      t.date,
+      t.id,
+      t.method,
+      t.status,
+      t.amount
+    ])
+
+    exportToCSV({
+      filename: `My_Diecast_Transactions_${new Date().toISOString().slice(0, 10)}`,
+      headers,
+      rows
+    })
+
+    if (onAddToast) onAddToast("Transaction statement downloaded as CSV!", "success")
+  }
+
+  const handleExportTxnPDF = () => {
+    const headers = ["Date & Time", "Transaction Reference", "Payment Channel", "Payment Status", "Amount Paid"]
+    const rows = transactions.map(t => [
+      t.date,
+      `<code>${t.id}</code>`,
+      t.method,
+      `<span style="color:#059669; font-weight:700">✓ ${t.status}</span>`,
+      `<strong style="color:#059669">₹${t.amount.toLocaleString('en-IN')}</strong>`
+    ])
+
+    exportToPDF({
+      title: "Collector Payment & Transaction Statement",
+      subtitle: `Verified transaction ledger for account ${profileForm.email}`,
+      category: "Payment Statement",
+      kpis: [
+        { label: "Total Transactions", value: `${transactions.length} Payments`, sub: "Verified gateway payments", color: "#3b82f6" },
+        { label: "Total Paid", value: `₹${totalSpent.toLocaleString('en-IN')}`, sub: "Settled payments", color: "#10b981" }
+      ],
+      headers,
+      rows,
+      notes: "All payments processed with 256-bit SSL encryption and verified bank gateway settlement."
+    })
+
+    if (onAddToast) onAddToast("Payment statement PDF generated!", "success")
   }
 
   return (
@@ -296,114 +392,170 @@ export default function UserAccountModal({
 
           {/* Tab 2: Orders & Tracking */}
           {activeTab === 'orders' && (
-            <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
-              {orders.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-                  <Package size={40} style={{ opacity: 0.3, margin: '0 auto 0.75rem' }} />
-                  <p>No orders placed yet.</p>
+            <div>
+              {orders.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Showing {orders.length} order invoices
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className="btn-secondary btn-sm"
+                      onClick={handleExportCustomerOrdersCSV}
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
+                    >
+                      <FileSpreadsheet size={13} color="#34d399" /> Orders CSV
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary btn-sm"
+                      onClick={handleExportCustomerOrdersPDF}
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+                    >
+                      <FileText size={13} color="#fbbf24" /> Invoice PDF
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                orders.map((order) => (
-                  <div key={order.id} className="order-card">
-                    <div className="order-header">
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
-                          Order ID: <strong style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>{order.id}</strong>
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          Placed on: {order.date}
-                        </span>
-                      </div>
-                      <span className={`status-badge ${order.statusKey || 'in-transit'}`}>
-                        {order.status}
-                      </span>
-                    </div>
+              )}
 
-                    {/* Items preview in order */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                      {(order.items || []).map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <img src={item.images?.[0] || ''} alt={item.name} style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }} />
-                            <div>
-                              <span style={{ color: '#fff', fontWeight: 600 }}>{item.name}</span>
-                              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>
-                                Scale {item.scale} · Qty: {item.quantity}
-                              </span>
-                            </div>
-                          </div>
-                          <span style={{ color: '#fff', fontWeight: 700 }}>
-                            ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+              <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                {orders.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                    <Package size={40} style={{ opacity: 0.3, margin: '0 auto 0.75rem' }} />
+                    <p>No orders placed yet.</p>
+                  </div>
+                ) : (
+                  orders.map((order) => (
+                    <div key={order.id} className="order-card">
+                      <div className="order-header">
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
+                            Order ID: <strong style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>{order.id}</strong>
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Placed on: {order.date}
                           </span>
                         </div>
-                      ))}
-                    </div>
+                        <span className={`status-badge ${order.statusKey || 'in-transit'}`}>
+                          {order.status}
+                        </span>
+                      </div>
 
-                    {/* Interactive Tracking Stepper */}
-                    <div className="tracking-stepper">
-                      <div className={`tracking-step ${order.currentStep >= 1 ? 'done' : ''}`}>
-                        <div className="step-dot">1</div>
-                        <span>Sealed</span>
+                      {/* Items preview in order */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                        {(order.items || []).map((item, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <img src={item.images?.[0] || ''} alt={item.name} style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }} />
+                              <div>
+                                <span style={{ color: '#fff', fontWeight: 600 }}>{item.name}</span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>
+                                  Scale {item.scale} · Qty: {item.quantity}
+                                </span>
+                              </div>
+                            </div>
+                            <span style={{ color: '#fff', fontWeight: 700 }}>
+                              ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                      <div className={`tracking-step ${order.currentStep >= 2 ? 'done' : ''}`}>
-                        <div className="step-dot">2</div>
-                        <span>Packed</span>
-                      </div>
-                      <div className={`tracking-step ${order.currentStep >= 3 ? (order.currentStep === 3 ? 'active' : 'done') : ''}`}>
-                        <div className="step-dot">3</div>
-                        <span>Air Express</span>
-                      </div>
-                      <div className={`tracking-step ${order.currentStep >= 4 ? 'done' : ''}`}>
-                        <div className="step-dot">4</div>
-                        <span>Delivered</span>
-                      </div>
-                    </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.82rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>
-                        Payment: <strong style={{ color: '#fff' }}>{order.paymentMethod}</strong>
-                      </span>
-                      <span style={{ color: 'var(--accent-amber)', fontWeight: 800, fontSize: '0.95rem' }}>
-                        Total: ₹{order.totalAmount.toLocaleString('en-IN')}
-                      </span>
+                      {/* Interactive Tracking Stepper */}
+                      <div className="tracking-stepper">
+                        <div className={`tracking-step ${order.currentStep >= 1 ? 'done' : ''}`}>
+                          <div className="step-dot">1</div>
+                          <span>Sealed</span>
+                        </div>
+                        <div className={`tracking-step ${order.currentStep >= 2 ? 'done' : ''}`}>
+                          <div className="step-dot">2</div>
+                          <span>Packed</span>
+                        </div>
+                        <div className={`tracking-step ${order.currentStep >= 3 ? (order.currentStep === 3 ? 'active' : 'done') : ''}`}>
+                          <div className="step-dot">3</div>
+                          <span>Air Express</span>
+                        </div>
+                        <div className={`tracking-step ${order.currentStep >= 4 ? 'done' : ''}`}>
+                          <div className="step-dot">4</div>
+                          <span>Delivered</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.82rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          Payment: <strong style={{ color: '#fff' }}>{order.paymentMethod}</strong>
+                        </span>
+                        <span style={{ color: 'var(--accent-amber)', fontWeight: 800, fontSize: '0.95rem' }}>
+                          Total: ₹{order.totalAmount.toLocaleString('en-IN')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
           )}
 
           {/* Tab 3: Transactions */}
           {activeTab === 'transactions' && (
-            <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
-              <table className="transaction-table">
-                <thead>
-                  <tr>
-                    <th>Date & Time</th>
-                    <th>Transaction ID</th>
-                    <th>Method</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Amount (INR)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((txn) => (
-                    <tr key={txn.id}>
-                      <td>{txn.date}</td>
-                      <td style={{ fontFamily: 'var(--font-mono)', color: '#fff' }}>{txn.id}</td>
-                      <td>{txn.method}</td>
-                      <td>
-                        <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <CheckCircle2 size={13} /> {txn.status}
-                        </span>
-                      </td>
-                      <td className="amount" style={{ textAlign: 'right' }}>
-                        ₹{txn.amount.toLocaleString('en-IN')}
-                      </td>
+            <div>
+              {transactions.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Payment records ({transactions.length})
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className="btn-secondary btn-sm"
+                      onClick={handleExportTxnCSV}
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
+                    >
+                      <FileSpreadsheet size={13} color="#34d399" /> CSV
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary btn-sm"
+                      onClick={handleExportTxnPDF}
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+                    >
+                      <FileText size={13} color="#fbbf24" /> Ledger PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                <table className="transaction-table">
+                  <thead>
+                    <tr>
+                      <th>Date & Time</th>
+                      <th>Transaction ID</th>
+                      <th>Method</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Amount (INR)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {transactions.map((txn) => (
+                      <tr key={txn.id}>
+                        <td>{txn.date}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', color: '#fff' }}>{txn.id}</td>
+                        <td>{txn.method}</td>
+                        <td>
+                          <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle2 size={13} /> {txn.status}
+                          </span>
+                        </td>
+                        <td className="amount" style={{ textAlign: 'right' }}>
+                          ₹{txn.amount.toLocaleString('en-IN')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
